@@ -58,4 +58,7 @@ module cpu(input logic clk, input logic rst_n);
 			instruction_EX <= inst_ram[PC_FETCH];
 		end
 	end
+	always_ff @(posedge clk) begin //PipeLine register for all the R-blocks o_0
+		<signal_name>_wb <= <signal_name>_EX;
+		end;
 endmodule
