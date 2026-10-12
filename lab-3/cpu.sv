@@ -1,7 +1,15 @@
+// questions to ask alex
+
+// GPIO_in what that mean
+// check me work
+// base10 testbench questions
+// check ram dump thingy
+
+
 // da cpu :3
 module cpu(input logic clk, input logic rst_n);
 	logic [31:0] inst_ram [4095:0];
-	initial $readmemh("program.rom", inst_ram); // page 28 microarchitecture.pdf
+	initial $readmemh("instruction.txt", inst_ram); // page 28 microarchitecture.pdf
 	
 	logic [11:0] PC_FETCH = 12'd0;
 	logic [31:0] instruction_EX;
@@ -58,6 +66,9 @@ module cpu(input logic clk, input logic rst_n);
 		.GPIO_we(GPIO_we)
 	);
 	
+	logic [1:0] regsel_wb;
+	logic [31:0] io2_out;
+	logic [31:0] R_wb;
 	
 	// reg file :3
 	logic [31:0] readdata1;
@@ -72,7 +83,7 @@ module cpu(input logic clk, input logic rst_n);
 		.readaddr1(rs1),
 		.readaddr2(rs2),
 		.writeaddr(regdest_wb),
-		.writedata(), // TODO: do this shit
+		.writedata(regsel_mux),
 		
 		// output
 		.readdata1(readdata1),
@@ -96,6 +107,12 @@ module cpu(input logic clk, input logic rst_n);
 		.R(R)
 	);
 	
+	// loop back to writedata function in regfile
+	assign regsel_mux = (regsel_wb == 2'b00) ? GPIO_in :
+			    (regsel_wb == 2'b01) ? io2_out :
+			    (regsel_wb == 2'b10) ? R_wb :
+			    			   32'b0;
+	
 	// PC :D
 	always_ff @(posedge clk) begin
 		if (~rst_n) begin
@@ -109,7 +126,13 @@ module cpu(input logic clk, input logic rst_n);
 	
 	// pipeLine register for all the R-blocks o_0
 	always_ff @(posedge clk) begin
-		regdest_wb <= rd
+		regdest_wb <= rd;
 		regwrite_wb <= regwrite_EX;
+		regsel_wb <= regsel_EX;;
+		R_wb <= R;
+		
+		if (GPIO_we) begin
+			io2_out <= readdata1;
+		end
 	end
 endmodule
